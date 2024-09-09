@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/enerBit/redsumer/v3/pkg/client"
+	"github.com/santi-giraldo2/redsumer/v3/pkg/client"
 	"github.com/valkey-io/valkey-go"
 	"github.com/valkey-io/valkey-go/mock"
 	"go.uber.org/mock/gomock"

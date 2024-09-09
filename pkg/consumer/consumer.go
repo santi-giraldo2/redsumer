@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/enerBit/redsumer/v3/pkg/client"
-	errors_custom "github.com/enerBit/redsumer/v3/pkg/errors"
+	"github.com/santi-giraldo2/redsumer/v3/pkg/client"
+	errors_custom "github.com/santi-giraldo2/redsumer/v3/pkg/errors"
 	"github.com/valkey-io/valkey-go"
 )
 
