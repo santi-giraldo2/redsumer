@@ -1,4 +1,4 @@
-module github.com/enerBit/redsumer/v3
+module github.com/santi-giraldo2/redsumer/v3
 
 go 1.22.7
 
