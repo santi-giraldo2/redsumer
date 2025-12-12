@@ -12,7 +12,6 @@ import (
 	"github.com/valkey-io/valkey-go"
 )
 
-
 const (
 	consumer_NEVER_DELIVERED_TO_OTHER_CONSUMERS_SO_FAR = ">"
 	consumer_INITIAL_STREAM_ID                         = "0-0"
@@ -28,7 +27,7 @@ type Consumer struct {
 	GroupName    string
 	ConsumerName string
 
-	BatchSizeNewMessage int64
+	BatchSizeNewMessage *int64
 	BatchSizePending    *int64
 	BatchSizeAutoClaim  *int64
 
@@ -38,7 +37,6 @@ type Consumer struct {
 	latestPendingMessageId string
 	nextIdAutoClaim        string
 }
-
 
 // InitConsumer creates a new Consumer instance.
 // If any error occurs during the process, it returns nil and the error.
@@ -156,7 +154,7 @@ func (c *Consumer) AcknowledgeMessage(ctx context.Context, messageID string) err
 // The function returns a slice of Valkey.XRangeEntry, which contains the retrieved messages,
 // and an error if any occurred during the retrieval process.
 func (c *Consumer) NewMessages(ctx context.Context) ([]valkey.XRangeEntry, error) {
-	cmd := c.Client.Instance.B().Xreadgroup().Group(c.GroupName, c.ConsumerName).Count(c.BatchSizeNewMessage).Streams().Key(c.StreamName).Id(consumer_NEVER_DELIVERED_TO_OTHER_CONSUMERS_SO_FAR).Build()
+	cmd := c.Client.Instance.B().Xreadgroup().Group(c.GroupName, c.ConsumerName).Count(*c.BatchSizeNewMessage).Streams().Key(c.StreamName).Id(consumer_NEVER_DELIVERED_TO_OTHER_CONSUMERS_SO_FAR).Build()
 	v, err := c.Client.Instance.Do(ctx, cmd).AsXRead()
 	if err != nil {
 		var errV *valkey.ValkeyError
@@ -239,14 +237,13 @@ func (c *Consumer) validateError(ctx context.Context, err error) error {
 	return err
 }
 
-
 // Consume consumes messages from Valkey.
 // It first tries to fetch new messages, then pending messages, and finally claimed messages.
 // If any messages are found, they are returned along with a nil error.
 // If no messages are found, it returns nil and nil error.
 func (c *Consumer) Consume(ctx context.Context) ([]valkey.XRangeEntry, error) {
-	retry:
-		var messages []valkey.XRangeEntry
+retry:
+	if c.BatchSizeNewMessage != nil {
 		messages, err := c.NewMessages(ctx)
 		if err != nil {
 			err = c.validateError(ctx, err)
@@ -258,34 +255,35 @@ func (c *Consumer) Consume(ctx context.Context) ([]valkey.XRangeEntry, error) {
 		if len(messages) != 0 {
 			return messages, nil
 		}
-	
-		if c.BatchSizePending != nil {
-			messages, err = c.PendingMessages(ctx)
-			if err != nil {
-				err = c.validateError(ctx, err)
-				if err == nil {
-					goto retry
-				}
-				return nil, err
-			}
-			if len(messages) != 0 {
-				return messages, nil
-			}
-		}
-	
-		if c.BatchSizeAutoClaim != nil {
-			messages, err = c.AutoClaimMessages(ctx)
-			if err != nil {
-				err = c.validateError(ctx, err)
-				if err == nil {
-					goto retry
-				}
-				return nil, err
-			}
-			if len(messages) != 0 {
-				return messages, nil
-			}
-		}
-	
-		return nil, nil
 	}
+
+	if c.BatchSizePending != nil {
+		messages, err := c.PendingMessages(ctx)
+		if err != nil {
+			err = c.validateError(ctx, err)
+			if err == nil {
+				goto retry
+			}
+			return nil, err
+		}
+		if len(messages) != 0 {
+			return messages, nil
+		}
+	}
+
+	if c.BatchSizeAutoClaim != nil {
+		messages, err := c.AutoClaimMessages(ctx)
+		if err != nil {
+			err = c.validateError(ctx, err)
+			if err == nil {
+				goto retry
+			}
+			return nil, err
+		}
+		if len(messages) != 0 {
+			return messages, nil
+		}
+	}
+
+	return nil, nil
+}

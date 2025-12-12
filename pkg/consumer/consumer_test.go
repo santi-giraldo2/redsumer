@@ -307,6 +307,8 @@ func TestNewMessagesSuccess(t *testing.T) {
 	ctx := context.Background()
 	db := mock.NewClient(ctrl)
 
+	batchSize := int64(1)
+
 	db.EXPECT().Do(ctx, mock.Match("XREADGROUP", "GROUP", groupName, consumerName, "COUNT", "1", "STREAMS", streamName, consumer_NEVER_DELIVERED_TO_OTHER_CONSUMERS_SO_FAR)).Return(mock.Result(mock.ValkeyArray(mock.ValkeyArray(mock.ValkeyNil(), mock.ValkeyNil()))))
 	clientArg := &client.ClientArgs{
 		Instance: db,
@@ -316,7 +318,7 @@ func TestNewMessagesSuccess(t *testing.T) {
 		StreamName:          streamName,
 		GroupName:           groupName,
 		ConsumerName:        consumerName,
-		BatchSizeNewMessage: 1,
+		BatchSizeNewMessage: &batchSize,
 	}
 
 	_, err := c.NewMessages(ctx)
@@ -332,6 +334,8 @@ func TestNewMessagesError(t *testing.T) {
 	ctx := context.Background()
 	db := mock.NewClient(ctrl)
 
+	batchSize := int64(1)
+
 	db.EXPECT().Do(ctx, mock.Match("XREADGROUP", "GROUP", groupName, consumerName, "COUNT", "1", "STREAMS", streamName, consumer_NEVER_DELIVERED_TO_OTHER_CONSUMERS_SO_FAR)).Return(mock.Result(mock.ValkeyError("error")))
 	clientArg := &client.ClientArgs{
 		Instance: db,
@@ -341,7 +345,7 @@ func TestNewMessagesError(t *testing.T) {
 		StreamName:          streamName,
 		GroupName:           groupName,
 		ConsumerName:        consumerName,
-		BatchSizeNewMessage: 1,
+		BatchSizeNewMessage: &batchSize,
 	}
 
 	_, err := c.NewMessages(ctx)
@@ -460,5 +464,34 @@ func TestAutoClaimedError(t *testing.T) {
 	_, err := c.AutoClaimMessages(ctx)
 	if err == nil {
 		t.Fatalf("expected error, got nil")
+	}
+}
+
+func TestConsumeOnlyPending(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	ctx := context.Background()
+	db := mock.NewClient(ctrl)
+
+	var S int64 = 1
+	db.EXPECT().Do(ctx, mock.Match("XREADGROUP", "GROUP", groupName, consumerName, "COUNT", "1", "STREAMS", streamName, consumer_INITIAL_STREAM_ID)).
+		Return(mock.Result(mock.ValkeyArray(mock.ValkeyArray(mock.ValkeyNil(), mock.ValkeyNil()))))
+
+	clientArg := &client.ClientArgs{
+		Instance: db,
+	}
+	c := &Consumer{
+		Client:                 clientArg,
+		StreamName:             streamName,
+		GroupName:              groupName,
+		ConsumerName:           consumerName,
+		BatchSizePending:       &S,
+		latestPendingMessageId: consumer_INITIAL_STREAM_ID,
+	}
+
+	_, err := c.Consume(ctx)
+	if err != nil {
+		t.Fatalf("expected nil error, got %v", err)
 	}
 }
