@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/santi-giraldo2/redsumer/v3/pkg/client"
+	"github.com/santi-giraldo2/redsumer/v4/pkg/client"
 	"github.com/valkey-io/valkey-go/mock"
 	"go.uber.org/mock/gomock"
 )

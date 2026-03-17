@@ -3,7 +3,7 @@ package producer
 import (
 	"context"
 
-	"github.com/santi-giraldo2/redsumer/v3/pkg/client"
+	"github.com/santi-giraldo2/redsumer/v4/pkg/client"
 )
 
 type Producer struct {
