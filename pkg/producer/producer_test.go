@@ -4,15 +4,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/santi-giraldo2/redsumer/v4/pkg/client"
+	"github.com/enerBit/redsumer/v4/pkg/client"
 	"github.com/valkey-io/valkey-go/mock"
 	"go.uber.org/mock/gomock"
 )
 
 const (
 	streamName   string = "stream-test"
-	groupName    string = "group-test"
-	consumerName string = "consumer-test"
 )
 
 func TestProduceSuccess(t *testing.T) {

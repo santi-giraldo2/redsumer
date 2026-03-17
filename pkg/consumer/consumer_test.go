@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/santi-giraldo2/redsumer/v4/pkg/client"
-	errors_custom "github.com/santi-giraldo2/redsumer/v4/pkg/errors"
+	"github.com/enerBit/redsumer/v4/pkg/client"
+	errors_custom "github.com/enerBit/redsumer/v4/pkg/errors"
 	"github.com/valkey-io/valkey-go"
 	"github.com/valkey-io/valkey-go/mock"
 	"go.uber.org/mock/gomock"

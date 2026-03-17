@@ -1,4 +1,4 @@
-module github.com/santi-giraldo2/redsumer/v4
+module github.com/enerBit/redsumer/v4
 
 go 1.25.5
 

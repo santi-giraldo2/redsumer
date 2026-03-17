@@ -27,7 +27,7 @@ Built on top of [valkey-go](https://github.com/valkey-io/valkey-go).
 ## Installation
 
 ```bash
-go get github.com/santi-giraldo2/redsumer/v4
+go get github.com/enerBit/redsumer/v4
 ```
 
 ## Consumer usage
@@ -41,8 +41,8 @@ import (
     "log"
     "os"
 
-    "github.com/santi-giraldo2/redsumer/v4/pkg/client"
-    "github.com/santi-giraldo2/redsumer/v4/pkg/consumer"
+    "github.com/enerBit/redsumer/v4/pkg/client"
+    "github.com/enerBit/redsumer/v4/pkg/consumer"
 )
 
 func main() {
@@ -153,8 +153,8 @@ import (
     "context"
     "log"
 
-    "github.com/santi-giraldo2/redsumer/v4/pkg/client"
-    "github.com/santi-giraldo2/redsumer/v4/pkg/producer"
+    "github.com/enerBit/redsumer/v4/pkg/client"
+    "github.com/enerBit/redsumer/v4/pkg/producer"
 )
 
 func main() {
