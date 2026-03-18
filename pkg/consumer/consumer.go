@@ -334,6 +334,9 @@ retry:
 	if c.pelTraversalComplete {
 		currentSize, sizeErr := c.pelSize(ctx)
 		if sizeErr != nil {
+			if sizeErr = c.validateError(ctx, sizeErr); sizeErr == nil {
+				goto retry
+			}
 			return nil, sizeErr
 		}
 		if currentSize != c.prevPelSize {
