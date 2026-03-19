@@ -3,7 +3,7 @@ package producer
 import (
 	"context"
 
-	"github.com/enerBit/redsumer/v3/pkg/client"
+	"github.com/enerBit/redsumer/v4/pkg/client"
 )
 
 type Producer struct {

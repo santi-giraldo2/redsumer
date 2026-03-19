@@ -23,6 +23,11 @@ var cacheMutex = sync.RWMutex{}
 // It then sends a PING command to the Valkey server to check the connection.
 // The function returns any error encountered during client creation or the PING command.
 func (r *ClientArgs) InitClient(ctx context.Context) error {
+	// Allow injecting a pre-built/mocked client (e.g. for unit tests).
+	if r.Instance != nil {
+		return nil
+	}
+
 	redisAddress := fmt.Sprintf("%s:%s", r.Host, r.Port)
 
 	// Check if we already have a client for this address

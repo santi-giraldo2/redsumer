@@ -4,7 +4,8 @@ import "errors"
 
 var (
 	ErrStreamNotFound  = errors.New("stream key not found")
-	ErrKeyNotFound  = errors.New("key not found")
+	ErrKeyNotFound     = errors.New("key not found")
 	ErrGroupNotCreated = errors.New("group not created")
-	ErrNoAckedMessage = errors.New("no acked message")
+	ErrNoAckedMessage  = errors.New("no acked message")
+	ErrInvalidConfig   = errors.New("invalid consumer configuration")
 )
