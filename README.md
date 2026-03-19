@@ -39,7 +39,6 @@ import (
     "context"
     "fmt"
     "log"
-    "os"
 
     "github.com/enerBit/redsumer/v4/pkg/client"
     "github.com/enerBit/redsumer/v4/pkg/consumer"
@@ -122,25 +121,45 @@ func main() {
 Pass a cancellable context. All sleeps (backoff, PEL wait) will unblock immediately when the context is cancelled.
 
 ```go
-ctx, cancel := context.WithCancel(context.Background())
+package main
 
-// cancel on SIGTERM / SIGINT
-go func() {
-    c := make(chan os.Signal, 1)
-    signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-    <-c
-    cancel()
-}()
+import (
+	"context"
+	"errors"
+	"github.com/enerBit/redsumer/v4/pkg/consumer"
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
+)
 
-for {
-    msgs, err := consumer.Consume(ctx)
-    if err != nil {
-        if errors.Is(err, context.Canceled) {
-            break
-        }
-        log.Println(err)
-    }
-    // ...
+func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+	// cancel on SIGTERM / SIGINT
+	go func() {
+		sigCh := make(chan os.Signal, 1)
+		signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+		<-sigCh
+		cancel()
+	}()
+	c, err := consumer.New(consumer.Config{
+		// TODO: fill in configuration
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	for {
+		msgs, err := c.Consume(ctx)
+		if err != nil {
+			if errors.Is(err, context.Canceled) {
+				break
+			}
+			log.Println(err)
+			continue
+		}
+		_ = msgs
+		// handle msgs ...
+	}
 }
 ```
 

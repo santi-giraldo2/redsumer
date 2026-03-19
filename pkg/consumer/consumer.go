@@ -81,6 +81,18 @@ func DefaultConsumerName() string {
 
 // validateConfig checks all required configuration fields before connecting.
 func validateConfig(c *Consumer) error {
+	if c.Client == nil {
+		return fmt.Errorf("%w: client must not be nil", errors_custom.ErrInvalidConfig)
+	}
+	if strings.TrimSpace(c.StreamName) == "" {
+		return fmt.Errorf("%w: stream_name must not be empty", errors_custom.ErrInvalidConfig)
+	}
+	if strings.TrimSpace(c.GroupName) == "" {
+		return fmt.Errorf("%w: group_name must not be empty", errors_custom.ErrInvalidConfig)
+	}
+	if strings.TrimSpace(c.ConsumerName) == "" {
+		return fmt.Errorf("%w: consumer_name must not be empty", errors_custom.ErrInvalidConfig)
+	}
 	if len(c.RatioSlice) == 0 {
 		return fmt.Errorf("%w: ratio_slice must not be empty", errors_custom.ErrInvalidConfig)
 	}
@@ -138,10 +150,21 @@ func (c *Consumer) exist(ctx context.Context, key string) error {
 // Returns ErrStreamNotFound if the stream never appears.
 func (c *Consumer) waitForStream(ctx context.Context) error {
 	for _, waitTime := range c.Tries {
-		if err := c.exist(ctx, c.StreamName); err == nil {
+		err := c.exist(ctx, c.StreamName)
+		if err == nil {
 			return nil
 		}
-		time.Sleep(time.Second * time.Duration(waitTime))
+		// Only retry when the key truly does not exist.
+		if !errors.Is(err, errors_custom.ErrKeyNotFound) {
+			return err
+		}
+		wait := time.Second * time.Duration(waitTime)
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(wait):
+			// continue to next retry
+		}
 	}
 	return errors_custom.ErrStreamNotFound
 }
@@ -265,8 +288,17 @@ func contextSleep(ctx context.Context, d time.Duration) error {
 	if d <= 0 {
 		return nil
 	}
+	timer := time.NewTimer(d)
+	defer func() {
+		if !timer.Stop() {
+			select {
+			case <-timer.C:
+			default:
+			}
+		}
+	}()
 	select {
-	case <-time.After(d):
+	case <-timer.C:
 		return nil
 	case <-ctx.Done():
 		return ctx.Err()
@@ -346,6 +378,13 @@ retry:
 			c.pelWaitIdx = advanceIdx(c.pelWaitIdx, len(c.PelWaitSlice)-1)
 		}
 		c.prevPelSize = currentSize
+	}
+
+	if len(msgs) > 0 && len(pelMsgs) > 0 {
+		// Return new messages first, then reclaimed PEL messages.
+		combined := append(msgs, pelMsgs...)
+		c.backoffIdx = 0
+		return combined, nil
 	}
 
 	if len(msgs) > 0 {
